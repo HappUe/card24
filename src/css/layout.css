@@ -1,0 +1,123 @@
+/*
+  layout.css — каркас страницы: сцены, переходы между ними, общая сетка, адаптив.
+  Внешний вид самих сцен — в src/css/scenes/*.css.
+
+  Сцены — это <section class="view" id="view-...">. Ровно одна из них имеет
+  класс .active; переключает их src/js/scenes.js.
+*/
+
+#app {
+  position: relative;
+  min-height: 100vh;
+  min-height: 100dvh;  /* учитывает адресную строку мобильных браузеров */
+}
+
+/* ---------- сцены ---------- */
+.view {
+  display: none;
+  min-height: 100vh;
+  min-height: 100dvh;
+  width: 100%;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+
+  /* поля + безопасные зоны под вырез экрана телефона */
+  padding:
+    max(8vh, env(safe-area-inset-top))
+    max(6vw, env(safe-area-inset-right))
+    max(8vh, env(safe-area-inset-bottom))
+    max(6vw, env(safe-area-inset-left));
+}
+
+.view.active {
+  display: flex;
+  animation: view-in 0.7s ease both;
+}
+
+@keyframes view-in {
+  from { opacity: 0; transform: translateY(14px); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ---------- общие элементы интерфейса ---------- */
+
+/* основная кнопка (Начать, Далее и т.п.) */
+.primary-btn {
+  background: var(--red);
+  color: #fbf3e2;
+  border: none;
+  padding: 15px 34px;
+  border-radius: 999px;
+  font-size: 18px;
+  box-shadow: 0 10px 24px rgba(179, 67, 47, 0.4);
+  transition: transform 0.2s ease;
+}
+.primary-btn:hover { transform: translateY(-2px); }
+
+/* второстепенная кнопка-контур */
+.ghost-btn {
+  background: none;
+  border: 1.5px solid var(--gold);
+  color: var(--gold-soft);
+  padding: 10px 28px;
+  border-radius: 999px;
+  font-size: 16px;
+}
+
+/* кнопка звука: всегда в правом верхнем углу, поверх сцен */
+#sound-toggle {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 30;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-soft);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 16px var(--shadow);
+  opacity: 0.85;
+}
+#sound-toggle:hover { opacity: 1; }
+#sound-toggle[hidden] { display: none; }
+
+/* подсказка внизу экрана («нажми — показать всё сразу» и т.п.) */
+.hint-bar {
+  position: fixed;
+  left: 50%;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  transform: translateX(-50%);
+  width: 90%;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 19px;
+  color: var(--ink-soft);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.6s ease;
+}
+.hint-bar.on { opacity: 0.8; }
+
+/* ---------- адаптив ---------- */
+@media (max-width: 480px) {
+  .view {
+    padding-top: max(10vh, env(safe-area-inset-top));
+    padding-bottom: max(10vh, env(safe-area-inset-bottom));
+  }
+  .primary-btn { padding: 14px 30px; font-size: 17px; }
+}
+
+/* низкие экраны (телефон на боку): меньше вертикальных полей */
+@media (max-height: 520px) {
+  .view {
+    padding-top: max(4vh, env(safe-area-inset-top));
+    padding-bottom: max(4vh, env(safe-area-inset-bottom));
+  }
+}

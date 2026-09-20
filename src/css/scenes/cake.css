@@ -1,0 +1,242 @@
+/*
+  cake.css — сцена 3: торт со свечами-цифрами «2» и «4».
+
+  Разметка (index.html): #cake-caption, #cake-wrap > (#candles > 2 × .digit-candle > .flame) + #cake, #cake-hint.
+
+  Что включает cake.js (шаг 3.2):
+    --burn  на каждой .digit-candle — сила пламени от 1 (горит) до 0 (почти погасло);
+            пламя плавно уменьшается, тускнеет и дрожит чаще
+    .out    на .digit-candle — свеча погасла: пламени нет, идёт дымок
+    --glow  на #cake-wrap — тёплый свет вокруг торта от 1 до 0 (гаснет вместе со свечами)
+    .puff   на #cake-wrap — короткое «дуновение» при каждом нажатии (свечи качаются)
+    .done   на #cake-hint — все свечи погасли (подпись становится золотой)
+*/
+
+/* ---------- заголовок и подсказка ---------- */
+.cake-caption {
+  max-width: 500px;
+  margin-bottom: 64px;                 /* запас под пламя над свечами */
+  font-size: clamp(22px, 3.6vw, 32px);
+  line-height: 1.35;
+  text-wrap: balance;
+}
+
+.cake-hint {
+  min-height: 1.4em;                   /* чтобы смена текста не двигала торт */
+  margin-top: 34px;
+  max-width: 420px;
+  font-size: 21px;
+  color: var(--ink-soft);
+  transition: color 0.5s ease;
+}
+.cake-hint.done { color: var(--gold-soft); }
+
+/* ---------- обёртка торта ---------- */
+.cake-wrap {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+
+  /* ПКМ и долгое нажатие — основной жест сцены: не выделять и не звать меню/лупу */
+  user-select: none;
+  -webkit-user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+}
+
+/* тёплое сияние от свечей; cake.js уменьшает --glow до нуля */
+.cake-wrap::before {
+  content: '';
+  position: absolute;
+  inset: -70px -90px 30px;
+  z-index: -1;
+  background: radial-gradient(ellipse closest-side at 50% 38%, rgba(255, 190, 90, 0.34), transparent);   /* closest-side: к краям блока затухает полностью, резкой границы нет */
+  opacity: var(--glow, 1);
+  transition: opacity 0.45s ease;
+  pointer-events: none;
+}
+
+#view-cake.active .cake-wrap { animation: cake-rise 0.9s cubic-bezier(0.2, 0.7, 0.2, 1) 0.15s backwards; }
+@keyframes cake-rise {
+  from { opacity: 0; transform: translateY(26px) scale(0.97); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* дуновение: свечи на миг качаются */
+.cake-wrap.puff .candles { animation: candle-sway 0.28s ease-out; }
+@keyframes candle-sway {
+  0%   { transform: none; }
+  30%  { transform: translateX(-3px) rotate(-1.2deg); }
+  65%  { transform: translateX(2px) rotate(0.8deg); }
+  100% { transform: none; }
+}
+
+/* ---------- свечи-цифры ---------- */
+.candles {
+  --cw: clamp(38px, 11vw, 52px);       /* ширина одной цифры; высота — по пропорции 7 : 9 */
+  position: relative;
+  z-index: 2;
+  display: flex;
+  justify-content: center;
+  align-items: flex-end;
+  gap: clamp(18px, 6vw, 30px);
+  margin-bottom: -7px;                 /* свечи чуть «вдавлены» в торт */
+}
+
+.digit-candle {
+  position: relative;
+  width: var(--cw);
+  height: calc(var(--cw) * 9 / 7);
+  --burn: 1;
+  --wick-x: 50%;                        /* где над цифрой стоит пламя */
+}
+
+/* сама цифра: пиксельная маска 7×9, внутри — полосатый воск со светотенью */
+.digit-candle::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(0, 0, 0, 0.16), transparent 32%, rgba(255, 255, 255, 0.22) 62%, transparent),
+    repeating-linear-gradient(135deg, #f6ead8 0 7px, #e58f7c 7px 14px);
+  image-rendering: pixelated;
+  -webkit-mask: var(--digit-mask) center / 100% 100% no-repeat;
+          mask: var(--digit-mask) center / 100% 100% no-repeat;
+  filter: drop-shadow(0 3px 3px rgba(0, 0, 0, 0.28));
+}
+
+.digit-candle[data-digit="2"] {
+  --wick-x: 50%;
+  --digit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 9' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h5v1H1zM0 1h2v1H0zM5 1h2v1H5zM5 2h2v1H5zM4 3h2v1H4zM3 4h2v1H3zM2 5h2v1H2zM1 6h2v1H1zM0 7h2v1H0zM0 8h7v1H0z'/%3E%3C/svg%3E");
+}
+.digit-candle[data-digit="4"] {
+  --wick-x: 71.4%;                      /* верхушка четвёрки смещена вправо */
+  --digit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 7 9' shape-rendering='crispEdges'%3E%3Cpath d='M4 0h2v1H4zM3 1h3v1H3zM2 2h4v1H2zM1 3h2v1H1zM4 3h2v1H4zM0 4h2v1H0zM4 4h2v1H4zM0 5h7v1H0zM4 6h2v1H4zM4 7h2v1H4zM4 8h2v1H4z'/%3E%3C/svg%3E");
+}
+
+/* ---------- пламя ---------- */
+.flame {
+  position: absolute;
+  left: var(--wick-x);
+  bottom: 100%;
+  width: 14px;
+  height: 22px;
+  margin-bottom: -2px;
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+  background: radial-gradient(circle at 50% 72%, #fff2bf, var(--gold) 55%, var(--red) 100%);
+  filter: drop-shadow(0 0 7px rgba(255, 190, 80, 0.75));
+  transform-origin: bottom center;
+
+  /* сила пламени: уменьшение и тускнение; чем слабее, тем чаще дрожит */
+  scale: calc(0.3 + var(--burn, 1) * 0.7);
+  opacity: calc(0.4 + var(--burn, 1) * 0.6);
+  animation: flame-flicker calc(0.28s + var(--burn, 1) * 0.42s) ease-in-out infinite alternate;
+  transition: scale 0.35s ease, opacity 0.35s ease;
+}
+@keyframes flame-flicker {
+  from { transform: translateX(-50%) rotate(-3deg) scaleY(1); }
+  to   { transform: translateX(-50%) rotate(3deg)  scaleY(1.1); }
+}
+
+/* погасла: пламя исчезает, вьётся дымок */
+.digit-candle.out .flame {
+  opacity: 0;
+  scale: 0.15;
+  animation: none;
+  transform: translateX(-50%);
+}
+.digit-candle.out::after {
+  content: '';
+  position: absolute;
+  left: var(--wick-x);
+  bottom: 100%;
+  width: 4px;
+  height: 30px;
+  margin-left: -2px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, rgba(210, 205, 215, 0.55), transparent);
+  filter: blur(1.5px);
+  transform-origin: bottom center;
+  animation: smoke-rise 2.6s ease-out infinite;
+}
+@keyframes smoke-rise {
+  0%   { opacity: 0;    transform: translateY(0) scaleX(1); }
+  15%  { opacity: 0.9; }
+  100% { opacity: 0;    transform: translateY(-46px) translateX(6px) scaleX(2.4); }
+}
+
+/* ---------- торт ---------- */
+.cake {
+  position: relative;
+  width: clamp(210px, 62vw, 260px);
+  filter: drop-shadow(0 18px 20px var(--shadow));
+}
+
+.layer {
+  position: relative;
+  margin: 0 auto;
+  border-radius: 10px;
+  box-shadow: inset 0 -8px 12px rgba(0, 0, 0, 0.14);
+}
+
+/* белая глазурь с «потёками» по верхнему краю каждого яруса */
+.layer::before {
+  content: '';
+  position: absolute;
+  left: 0; right: 0; top: -1px;
+  height: 15px;
+  background: radial-gradient(circle at 10px 0, #fff8ec 9px, transparent 10px) repeat-x;
+  background-size: 20px 15px;
+  border-radius: 10px 10px 0 0;
+}
+
+.layer.top {
+  width: 68%;
+  height: 60px;
+  background: linear-gradient(180deg, #f7e3ec, #e9c3d6);
+}
+.layer.bottom {
+  width: 100%;
+  height: 80px;
+  margin-top: -8px;
+  background: linear-gradient(180deg, #eab5cb, #d494b4);
+}
+
+/* ягодки на нижнем ярусе */
+.layer.bottom::after {
+  content: '';
+  position: absolute;
+  left: 8%; right: 8%; bottom: 14px;
+  height: 10px;
+  background: radial-gradient(circle at 50% 50%, var(--red) 4px, transparent 5px) repeat-x;
+  background-size: 26px 10px;
+  opacity: 0.9;
+}
+
+/* блюдо (в разметке — .drip) */
+.drip {
+  width: 118%;
+  height: 13px;
+  margin: -2px auto 0;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #f3e9d8, #b9a7bd);
+  box-shadow: 0 2px 0 rgba(0, 0, 0, 0.18);
+}
+
+/* ---------- узкие экраны ---------- */
+@media (max-width: 480px) {
+  .cake-caption { margin-bottom: 56px; }
+  .layer.top { height: 54px; }
+  .layer.bottom { height: 72px; }
+}
+
+/* ---------- меньше движения ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .flame,
+  .digit-candle.out::after,
+  .cake-wrap.puff .candles,
+  #view-cake.active .cake-wrap { animation: none; }
+}

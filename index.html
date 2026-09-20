@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>С днём рождения</title>
+
+<!-- описание и превью ссылки (то, что видно в мессенджере, когда отправляешь ссылку) -->
+<meta name="description" content="Небольшая открытка. Включи звук и не торопись ✦">
+<meta property="og:type" content="website">
+<meta property="og:locale" content="ru_RU">
+<meta property="og:title" content="С днём рождения">
+<meta property="og:description" content="Небольшая открытка. Включи звук и не торопись ✦">
+<meta name="twitter:card" content="summary">
+<!-- личная открытка: не для поисковиков -->
+<meta name="robots" content="noindex, nofollow">
+<!-- цвет строки браузера на телефоне -->
+<meta name="theme-color" content="#241a2b">
+<!-- значок вкладки: пиксельное красное сердце (как душа в Undertale) -->
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 8' shape-rendering='crispEdges'%3E%3Cpath fill='%23ff2a2a' d='M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z'/%3E%3C/svg%3E">
+
+<!-- PWA: «паспорт» приложения (название, значки, полноэкранный режим) -->
+<link rel="manifest" href="manifest.json">
+<!-- значок при добавлении «На экран Домой» на iPhone (Apple свой тег manifest игнорирует) -->
+<link rel="apple-touch-icon" href="assets/icons/icon-512.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="С днём рождения">
+
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,500;0,600;1,500&family=EB+Garamond:ital@0;1&family=Caveat:wght@600&family=Pixelify+Sans&display=swap" rel="stylesheet">
+<!-- шрифты для «облаков» слов (все с кириллицей) -->
+<link href="https://fonts.googleapis.com/css2?family=Comfortaa&family=Marck+Script&family=Pacifico&family=Lobster&family=Oswald&family=Playfair+Display&family=Russo+One&family=Press+Start+2P&family=Neucha&family=Bad+Script&family=Pangolin&family=Amatic+SC&family=Yeseva+One&family=Rubik+Mono+One&family=Kelly+Slab&family=PT+Mono&family=Jura&display=swap" rel="stylesheet">
+
+<!-- стили: сначала основа, потом эффекты и каркас, потом сцены -->
+<link rel="stylesheet" href="src/css/base.css">
+<link rel="stylesheet" href="src/css/effects.css">
+<link rel="stylesheet" href="src/css/layout.css">
+<link rel="stylesheet" href="src/css/scenes/start.css">
+<link rel="stylesheet" href="src/css/scenes/notice.css">
+<link rel="stylesheet" href="src/css/scenes/wishes.css">
+<link rel="stylesheet" href="src/css/scenes/cake.css">
+<link rel="stylesheet" href="src/css/scenes/confetti.css">
+<link rel="stylesheet" href="src/css/scenes/letter.css">
+<link rel="stylesheet" href="src/css/scenes/clouds.css">
+</head>
+<body>
+<noscript>
+  <p style="padding:20vh 6vw;text-align:center;font:22px/1.5 Georgia,serif;color:#f3e9d8">Для этой открытки нужен включённый JavaScript ✦</p>
+</noscript>
+<!-- слой «облаков» слов: лежит позади всей страницы, наполняет src/js/clouds.js -->
+<div id="clouds-layer" aria-hidden="true"></div>
+
+<!-- кнопка звука (появляется после старта) -->
+<button id="sound-toggle" type="button" hidden>звук: вкл</button>
+
+<!-- слой конфетти поверх всего -->
+<div id="confetti-layer" aria-hidden="true"></div>
+
+<div id="app">
+
+  <!-- 1. СТАРТ -->
+  <section id="view-start" class="view active">
+    <p class="eyebrow hand" data-content="start.eyebrow">сегодня особенный день</p>
+    <h1 data-content="start.title">С днём рождения</h1>
+    <button id="start-btn" class="primary-btn" type="button" data-content="start.button">Начать →</button>  </section>
+
+  <!-- 1б. ПРЕДУПРЕЖДЕНИЕ: после «Начать», до пожеланий; тексты — content.js (notice) -->
+  <section id="view-notice" class="view">
+    <div id="notice-body" class="notice-body">
+      <div id="notice-text" class="notice-text"></div>
+      <p id="notice-sign" class="notice-sign hand"></p>
+      <button id="notice-next" class="ghost-btn" type="button"></button>
+    </div>
+    <p id="notice-read" class="notice-read"></p>
+  </section>
+
+  <!-- 2. ПОЖЕЛАНИЯ: один абзац на экран, строки печатаются по символу -->
+  <section id="view-wishes" class="view">
+    <div id="wish-text" class="wish-text" aria-live="polite"></div>
+    <div id="wish-dots" class="wish-dots" aria-hidden="true"></div>
+    <button id="wish-next" class="ghost-btn" type="button" data-content="wishesUi.next">Далее →</button>
+    <p id="wish-hint" class="hint-bar" data-content="wishesUi.skipHint">нажми — показать всё сразу</p>
+  </section>
+
+  <!-- 3. ТОРТ: свечи-цифры «2» и «4» -->
+  <section id="view-cake" class="view">
+    <h2 id="cake-caption" class="cake-caption" data-content="cake.caption">Загадай желание — и оно обязательно исполнится</h2>
+    <div id="cake-wrap" class="cake-wrap">
+      <div id="candles" class="candles">
+        <div class="digit-candle" data-digit="2"><span class="flame"></span></div>
+        <div class="digit-candle" data-digit="4"><span class="flame"></span></div>
+      </div>
+      <div id="cake" class="cake">
+        <div class="layer top"></div>
+        <div class="layer bottom"></div>
+        <div class="drip"></div>
+      </div>
+    </div>
+    <p id="cake-hint" class="cake-hint pixel"></p>
+  </section>
+
+  <!-- 4. КОНФЕТТИ — это не сцена, а слой #confetti-layer выше -->
+
+  <!-- 5. ПИСЬМО: конверт → письмо с побуквенной печатью -->
+  <section id="view-letter" class="view">
+    <div id="env-wrap" class="env-wrap">
+      <button id="envelope" class="envelope" type="button" aria-label="Открыть конверт">
+        <div class="env-back"></div>
+        <div class="env-paper"><i></i><i></i><i></i><i></i></div>
+        <div class="pocket"></div>
+        <div class="pocket-bottom"></div>
+        <div class="flap"></div>
+        <div class="seal">24</div>
+      </button>
+      <p id="env-hint" class="env-hint pixel cursor" data-content="letter.envelopeHint">открой конверт</p>
+    </div>
+
+    <article id="letter" class="letter">
+      <!-- текст подставляет src/js/letter.js из content/content.js -->
+      <p id="letter-eyebrow" class="tw-line letter-eyebrow"></p>
+      <h2 id="letter-title" class="tw-line"></h2>
+      <div id="letter-body"></div>
+      <p id="letter-sign" class="tw-line letter-sign"></p>
+    </article>
+  </section>
+
+</div>
+
+<!-- скрипты: обычные теги, порядок важен (каждый следующий опирается на предыдущие) -->
+<script src="content/content.js"></script>
+<script src="content/clouds.js"></script>
+<script src="src/js/audio.js"></script>
+<script src="src/js/typewriter.js"></script>
+<script src="src/js/pagefx.js"></script>
+<script src="src/js/scenes.js"></script>
+<script src="src/js/notice.js"></script>
+<script src="src/js/wishes.js"></script>
+<script src="src/js/cake.js"></script>
+<script src="src/js/confetti.js"></script>
+<script src="src/js/letter.js"></script>
+<script src="src/js/clouds.js"></script>
+<script src="src/js/main.js"></script>
+
+<!-- PWA: сохраняет файлы на устройстве, чтобы можно было установить как приложение
+     и открывать без интернета. Работает только на https или на localhost — это
+     ограничение самого браузера, а не ошибка; подробности в docs/pwa-как-проверить.md -->
+<script>
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('service-worker.js').catch(() => { /* нет https/localhost — открытка всё равно работает, просто без установки */ });
+    });
+  }
+</script>
+
+</body>
+</html>

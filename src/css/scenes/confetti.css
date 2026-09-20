@@ -1,0 +1,108 @@
+/*
+  confetti.css — сцена 4: конфетти (слой поверх страницы, не отдельная сцена).
+
+  Слой #confetti-layer уже есть в index.html. Частицы создаёт confetti.js (шаг 4.2)
+  и задаёт каждой свои переменные:
+
+    Внешний вид:   --c (цвет)  --w, --h (размер, px)  --rot (наклон при падении, deg)
+    Время:         --dur (длительность, с)  --delay (задержка, с)
+    Классы формы:  (без класса — прямоугольник) .round  .tri  .px  .heart
+    Как летит:
+      .fall   падает сверху:  left задаёт JS;  --drift (снос вбок, px)
+      .burst  вылетает из точки (left/top задаёт JS) и падает:
+              --bx, --by (пик вылета, px от точки)  --end-y (до какой глубины падать, px)
+
+  Вспышка света в момент залпа: <div class="confetti-flash"> (создаёт JS, сама исчезает).
+*/
+
+#confetti-layer {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  overflow: hidden;
+  pointer-events: none;
+  perspective: 700px;              /* чтобы кувыркание в 3D выглядело объёмно */
+}
+
+/* ---------- частица ---------- */
+.confetto {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: var(--w, 9px);
+  height: var(--h, 14px);
+  background: var(--c, var(--gold));
+  border-radius: 2px;
+  opacity: 0;
+  will-change: transform, translate, opacity;
+}
+
+/* формы */
+.confetto.round { border-radius: 50%; }
+.confetto.tri   { clip-path: polygon(50% 0, 100% 100%, 0 100%); border-radius: 0; }
+.confetto.px    { border-radius: 0; }                         /* квадратный «пиксель» */
+.confetto.heart {                                             /* пиксельное сердце-душа */
+  height: calc(var(--w, 12px) * 8 / 9);
+  border-radius: 0;
+  image-rendering: pixelated;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 8' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+          mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 9 8' shape-rendering='crispEdges'%3E%3Cpath d='M1 0h2v1H1zM6 0h2v1H6zM0 1h4v1H0zM5 1h4v1H5zM0 2h9v1H0zM0 3h9v1H0zM1 4h7v1H1zM2 5h5v1H2zM3 6h3v1H3zM4 7h1v1H4z'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+/* ---------- падение сверху ----------
+   translate — путь (с покачиванием), transform — кувыркание; они не мешают друг другу */
+.confetto.fall {
+  animation:
+    confetti-drop var(--dur, 3.2s) cubic-bezier(0.3, 0.1, 0.55, 1) var(--delay, 0s) forwards,
+    confetti-spin calc(var(--dur, 3.2s) * 0.45) linear var(--delay, 0s) infinite;
+  translate: 0 -8vh;
+}
+@keyframes confetti-drop {
+  0%   { translate: 0 -8vh;                                                opacity: 0; }
+  6%   {                                                                   opacity: 1; }
+  30%  { translate: calc(var(--drift, 0px) * 0.55) 30vh; }
+  55%  { translate: calc(var(--drift, 0px) * 0.25) 62vh; }
+  85%  { opacity: 1; }
+  100% { translate: var(--drift, 0px) 112vh;                               opacity: 0.9; }
+}
+
+/* ---------- залп из точки ---------- */
+.confetto.burst {
+  animation:
+    confetti-burst var(--dur, 3.4s) cubic-bezier(0.2, 0.7, 0.4, 1) var(--delay, 0s) forwards,
+    confetti-spin calc(var(--dur, 3.4s) * 0.4) linear var(--delay, 0s) infinite;
+}
+@keyframes confetti-burst {
+  0%   { translate: 0 0;                                                              opacity: 0; }
+  3%   {                                                                              opacity: 1; }
+  28%  { translate: var(--bx, 0px) var(--by, -200px); }
+  100% { translate: calc(var(--bx, 0px) * 1.35) var(--end-y, 100vh);                  opacity: 0.9; }
+}
+
+/* кувыркание: поворот в плоскости + переворот в 3D */
+@keyframes confetti-spin {
+  from { transform: rotateZ(0deg)               rotateX(0deg); }
+  to   { transform: rotateZ(var(--rot, 540deg)) rotateX(720deg); }
+}
+
+/* ---------- вспышка света в момент залпа ---------- */
+.confetti-flash {
+  position: fixed;
+  inset: 0;
+  z-index: 39;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 60%, rgba(255, 236, 190, 0.55), transparent 65%);
+  opacity: 0;
+  animation: confetti-flash 0.7s ease-out both;
+}
+@keyframes confetti-flash {
+  0%   { opacity: 0; }
+  20%  { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* ---------- меньше движения: без конфетти и вспышки ---------- */
+@media (prefers-reduced-motion: reduce) {
+  #confetti-layer,
+  .confetti-flash { display: none; }
+}

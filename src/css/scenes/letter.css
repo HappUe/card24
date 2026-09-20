@@ -1,0 +1,391 @@
+/*
+  letter.css — сцена 5: финальное письмо (вариант 1: конверт → письмо).
+
+  Разметка (index.html): #env-wrap > (#envelope + #env-hint), затем #letter (текст письма).
+  Конверт и письмо лежат в одной ячейке сетки: сначала виден конверт, потом он уезжает
+  вниз, а письмо появляется на его месте.
+
+  Состояния, которые включает letter.js (шаг 5.2):
+    #envelope.open       клапан откинут, печать исчезла
+    #envelope.rise       лист выехал из конверта
+    #envelope.box-glitching   глитч конверта в момент клика (класс из effects.css)
+    #env-hint.gone       подсказка «открой конверт» скрыта
+    #view-letter.reading конверт ушёл, письмо показано
+    (буквы письма проявляет Typewriter, стили .tw-line/.ch — в effects.css)
+*/
+
+/* сцена — сетка: конверт и письмо друг над другом в одной ячейке */
+#view-letter.active {
+  display: grid;
+  align-items: center;
+  justify-items: center;
+}
+#view-letter > * { grid-area: 1 / 1; }
+
+/* ---------- конверт ---------- */
+.env-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: opacity 0.8s ease, transform 0.8s ease;
+}
+
+.envelope {
+  --w: min(340px, 84vw);
+  --fx-rest-filter: drop-shadow(0 22px 26px var(--shadow));   /* тень возвращается после глитча */
+  position: relative;
+  width: var(--w);
+  height: calc(var(--w) * 0.68);
+  margin-top: calc(var(--w) * 0.3);                            /* запас, куда выезжает лист */
+  padding: 0;
+  border: none;
+  background: none;
+  perspective: 900px;
+  filter: var(--fx-rest-filter);
+  transition: transform 0.3s ease;
+}
+.envelope:not(.open):hover { transform: translateY(-4px) rotate(-0.6deg); }
+.envelope:focus-visible { outline: 2px solid var(--gold); outline-offset: 10px; }
+
+.env-back {
+  position: absolute; inset: 0;
+  background: var(--env-back);
+  border-radius: 6px;
+}
+
+/* лист внутри конверта (до открытия — просто полоски текста) */
+.env-paper {
+  position: absolute;
+  left: 7%; right: 7%; top: 8%;
+  height: 88%;
+  padding: 16% 12% 0;
+  background: var(--paper);
+  border-radius: 4px;
+  z-index: 2;
+  transition: transform 1s cubic-bezier(0.3, 0.7, 0.2, 1);
+}
+.env-paper i {
+  display: block;
+  height: 3px;
+  margin-bottom: 9px;
+  border-radius: 2px;
+  background: rgba(52, 34, 42, 0.13);
+}
+.env-paper i:nth-child(2) { width: 82%; }
+.env-paper i:nth-child(3) { width: 64%; }
+.envelope.rise .env-paper { transform: translateY(-58%); }
+
+/* передняя часть конверта — три треугольника поверх листа */
+.pocket { position: absolute; inset: 0; z-index: 3; pointer-events: none; }
+.pocket::before, .pocket::after { content: ''; position: absolute; inset: 0; }
+.pocket::before { background: var(--env-front); clip-path: polygon(0 0, 50% 55%, 0 100%); }
+.pocket::after  { background: var(--env-front); clip-path: polygon(100% 0, 50% 55%, 100% 100%); }
+.pocket-bottom {
+  position: absolute; inset: 0; z-index: 3; pointer-events: none;
+  background: linear-gradient(180deg, #e2b57b, var(--env-front));
+  clip-path: polygon(0 100%, 50% 48%, 100% 100%);
+  border-radius: 0 0 6px 6px;
+}
+
+/* клапан: откидывается вверх и меняет цвет на «изнанку» */
+.flap {
+  position: absolute; left: 0; right: 0; top: 0;
+  height: 58%;
+  z-index: 4;
+  background: var(--env-flap);
+  clip-path: polygon(0 0, 100% 0, 50% 100%);
+  transform-origin: top center;
+  transition:
+    transform 0.8s cubic-bezier(0.4, 0.1, 0.2, 1),
+    background 0.3s ease 0.3s,
+    z-index 0s linear 0.35s;
+}
+.envelope.open .flap {
+  transform: rotateX(180deg);
+  background: var(--env-flap-in);
+  z-index: 1;
+}
+
+/* красная печать «24» */
+.seal {
+  position: absolute; left: 50%; top: 46%;
+  z-index: 5;
+  width: 44px; height: 44px;
+  margin: -22px 0 0 -22px;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #d9634a, var(--red) 60%, #7c2a1c);
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.35);
+  display: flex; align-items: center; justify-content: center;
+  font-family: var(--font-display);
+  font-weight: 600;
+  font-size: 17px;
+  color: #f7dcc7;
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+.envelope.open .seal { opacity: 0; transform: scale(0.6); }
+
+/* подсказка «открой конверт▮» (курсор — класс .cursor из effects.css) */
+.env-hint {
+  margin-top: 34px;
+  font-size: 26px;
+  color: var(--gold-soft);
+  transition: opacity 0.4s ease;
+}
+.env-hint.gone { opacity: 0; }
+
+/* конверт уезжает вниз и гаснет, когда пора читать письмо */
+#view-letter.reading .env-wrap {
+  opacity: 0;
+  transform: translateY(50px) scale(0.96);
+  pointer-events: none;
+}
+
+/* ---------- письмо ---------- */
+.letter {
+  width: 100%;
+  max-width: 560px;
+  padding: clamp(28px, 6vw, 56px);
+  text-align: left;
+  color: var(--paper-ink);
+  background: var(--paper);
+  border-radius: 4px;
+  box-shadow: 0 26px 54px var(--shadow);
+
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(40px) scale(0.97);
+  transition:
+    opacity 0.9s ease,
+    transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1),
+    visibility 0s linear 0.9s;
+}
+#view-letter.reading .letter {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0.2s, 0.2s, 0s;
+}
+
+.letter-eyebrow {
+  margin: 0 0 6px;
+  font-family: var(--font-hand);
+  font-size: 24px;
+  color: var(--red);
+}
+.letter h2 {
+  margin: 0 0 20px;
+  font-size: clamp(26px, 4vw, 34px);
+}
+.letter p {
+  margin: 0 0 16px;
+  font-size: clamp(17px, 2.4vw, 19px);
+  line-height: 1.75;
+}
+.letter .letter-sign {
+  display: inline-block;               /* чтобы глитч-«призрак» не растягивался на всю ширину */
+  margin: 22px 0 0;
+  font-family: var(--font-hand);
+  font-size: 28px;
+  color: var(--red);
+}
+
+/* ---------- «Дополнение? (развернуть)»: разворачиваемая строка под подписью ----------
+   Разметку создаёт letter.js (шаг 6.4):
+     .letter-ps
+       button.letter-ps-toggle      подсвеченная строка (оформлена как подпись)
+       .letter-ps-body > .letter-ps-inner > .letter-ps-content > p × несколько   разворачивается вниз
+   Состояния:  .ready — блок показан (после подписи);  .open — развёрнут. */
+.letter-ps {
+  margin-top: 16px;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.8s ease, visibility 0s linear 0.8s;
+}
+.letter-ps.ready {
+  opacity: 1;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.letter-ps-toggle {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-left: -8px;
+  padding: 2px 8px;
+  border: none;
+  border-radius: 2px;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--font-hand);
+  font-size: 28px;
+  color: var(--red);
+  /* маркерная подсветка под строкой, как выделенный фломастером текст */
+  background: linear-gradient(transparent 58%, rgba(217, 164, 65, 0.45) 58%, rgba(217, 164, 65, 0.45) 92%, transparent 92%) no-repeat;
+  transition: filter 0.25s ease, background-color 0.25s ease;
+}
+.letter-ps-toggle:hover,
+.letter-ps-toggle:focus-visible { background-color: rgba(217, 164, 65, 0.16); filter: brightness(1.05); }
+.letter-ps-toggle:focus-visible { outline: 2px solid var(--gold); outline-offset: 3px; }
+
+/* стрелка-подсказка: покачивается, пока p.s. свёрнут, и переворачивается при разворачивании */
+.letter-ps-toggle::after {
+  content: '▾';
+  font-family: var(--font-pixel);
+  font-size: 20px;
+  animation: ps-nudge 1.6s ease-in-out infinite;
+  transition: transform 0.3s ease;
+}
+@keyframes ps-nudge {
+  0%, 100% { translate: 0 0; }
+  50%      { translate: 0 3px; }
+}
+.letter-ps.open .letter-ps-toggle::after { transform: rotate(180deg); animation: none; }
+
+/* разворачивание: высота плавно растёт от 0 до содержимого */
+.letter-ps-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.6s ease;
+}
+.letter-ps.open .letter-ps-body { grid-template-rows: 1fr; }
+.letter-ps-inner { min-height: 0; overflow: hidden; }
+
+/* содержимое: несколько абзацев под одной тонкой чертой слева */
+.letter-ps-content {
+  margin-top: 12px;
+  padding-left: 14px;
+  border-left: 2px solid rgba(179, 67, 47, 0.35);
+}
+.letter .letter-ps-content p {
+  margin: 0 0 14px;
+  font-size: clamp(16px, 2.3vw, 18px);
+  line-height: 1.7;
+}
+.letter .letter-ps-content p:last-child { margin-bottom: 4px; }
+
+@media (prefers-reduced-motion: reduce) {
+  .letter-ps, .letter-ps-body { transition-duration: 0.01s !important; transition-delay: 0s !important; }
+  .letter-ps-toggle::after { animation: none; }
+}
+
+/* ---------- кнопка «сохранить письмо в PDF» ----------
+   Слева сверху, оформлена так же, как кнопка звука справа (#sound-toggle в layout.css).
+   Создаёт и показывает letter.js (шаг 6.8) — когда письмо открыто. */
+.export-btn {
+  position: fixed;
+  top: max(14px, env(safe-area-inset-top));
+  left: max(14px, env(safe-area-inset-left));
+  z-index: 30;
+  min-width: 42px;
+  height: 42px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-soft);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 16px var(--shadow);
+  opacity: 0.85;
+  animation: export-in 0.6s ease backwards;
+}
+.export-btn:hover { opacity: 1; }
+.export-btn[hidden] { display: none; }
+@keyframes export-in {
+  from { opacity: 0; transform: translateY(-8px); }
+  to   { opacity: 0.85; transform: none; }
+}
+
+/* ---------- кнопка «пройти заново» ----------
+   Внизу по центру, вид как у кнопки PDF. Создаёт letter.js, когда письмо напечатано. */
+.restart-btn {
+  position: fixed;
+  bottom: max(18px, env(safe-area-inset-bottom));
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 30;
+  height: 42px;
+  padding: 0 18px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-soft);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 16px var(--shadow);
+  opacity: 0.85;
+  animation: restart-in 0.6s ease backwards;
+}
+.restart-btn:hover { opacity: 1; }
+.restart-btn[hidden] { display: none; }
+@keyframes restart-in {
+  from { opacity: 0; transform: translate(-50%, 8px); }
+  to   { opacity: 0.85; transform: translateX(-50%); }
+}
+
+/* ---------- печать / сохранение в PDF ----------
+   letter.js собирает на странице скрытый блок #print-letter с ПОЛНЫМ текстом письма
+   (включая «Дополнение», даже если оно свёрнуто на экране):
+     #print-letter > .pl-eyebrow, .pl-title, .pl-text (p × N), .pl-sign,
+                     .pl-more-label, .pl-more (p × N)
+   На экране этот блок скрыт; при печати показывается только он.
+   В окне печати браузера выбирается «Сохранить как PDF». */
+#print-letter { display: none; }
+
+@page { size: A4; margin: 16mm; }
+
+@media print {
+  /* сам лист — белый; кремовым залит только «бланк» внутри золотой рамки,
+     поэтому кремовый цвет никогда не выходит за рамку */
+  html, body {
+    background: #fff !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;                 /* чтобы кремовый фон и подсветка попали в PDF */
+  }
+  body > *:not(#print-letter) { display: none !important; }
+
+  #print-letter {
+    display: block;
+    box-sizing: border-box;
+    min-height: 261mm;                         /* рамка тянется на всю высоту листа А4 (297 − 2×16 мм полей) */
+    padding: 12mm 12mm 10mm;
+    border: 1.2pt solid #d9a441;
+    border-radius: 3mm;
+    background: #fff8ec;
+    -webkit-box-decoration-break: clone;
+    box-decoration-break: clone;               /* если текст уйдёт на 2-ю страницу, рамка с фоном будет и там */
+    color: #34222a;
+    font-family: 'EB Garamond', Georgia, serif;
+    font-size: 12.5pt;
+    line-height: 1.6;
+  }
+  .pl-eyebrow { margin: 0 0 2mm; font-family: 'Caveat', cursive; font-size: 17pt; color: #b3432f; }
+  .pl-title {
+    margin: 0 0 8mm;
+    font-family: 'Cormorant Garamond', Georgia, serif;
+    font-weight: 600; font-size: 26pt; line-height: 1.15;
+  }
+  .pl-text p { margin: 0 0 4mm; break-inside: avoid; }
+  .pl-sign { margin: 6mm 0 0; font-family: 'Caveat', cursive; font-size: 20pt; color: #b3432f; }
+
+  /* строка «Дополнение» — подсвеченная, как подпись на экране */
+  .pl-more-label {
+    display: inline-block;
+    margin: 8mm 0 0 -2mm;
+    padding: 0.5mm 2mm;
+    font-family: 'Caveat', cursive; font-size: 18pt; color: #b3432f;
+    background: linear-gradient(transparent 58%, rgba(217, 164, 65, 0.45) 58%, rgba(217, 164, 65, 0.45) 92%, transparent 92%);
+  }
+  .pl-more { margin-top: 3mm; padding-left: 4mm; border-left: 0.8pt solid rgba(179, 67, 47, 0.4); }
+  .pl-more p { margin: 0 0 4mm; font-size: 12pt; break-inside: avoid; }
+}
+
+/* подсказка «нажми — показать всё сразу» внизу экрана создаёт letter.js (класс .hint-bar из layout.css) */
+
+/* ---------- меньше движения ---------- */
+@media (prefers-reduced-motion: reduce) {
+  .env-wrap, .env-paper, .flap, .seal, .letter { transition-duration: 0.01s !important; transition-delay: 0s !important; }
+}

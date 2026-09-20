@@ -1,0 +1,68 @@
+/*
+  wishes.css — сцена 2: пожелания.
+  На экране один абзац за раз; его строки печатаются по символу (см. typewriter.js).
+  Классы, которые включает wishes.js:
+    #wish-next.ready       — кнопка «Далее» появляется, когда абзац допечатан
+    .wish-dots span.on     — текущий абзац; span.seen — уже прочитанные
+*/
+
+#view-wishes {
+  cursor: pointer;              /* клик по сцене — показать абзац сразу */
+}
+
+/* фиксированная «сцена» под текст: чтобы разная длина абзацев не двигала кнопку */
+.wish-text {
+  width: 100%;
+  max-width: 640px;
+  min-height: 13em;
+  font-size: clamp(21px, 3.3vw, 30px);
+  line-height: 1.6;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  text-wrap: balance;
+}
+
+.wish-text p { margin: 0; }
+
+/* ---------- кнопка «Далее» ---------- */
+#wish-next {
+  margin-top: 40px;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(6px);
+  transition: opacity 0.5s ease, transform 0.5s ease, visibility 0s linear 0.5s, background 0.2s ease;
+}
+#wish-next.ready {
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition-delay: 0s;
+}
+#wish-next:hover { background: rgba(217, 164, 65, 0.12); }
+
+/* ---------- точки-индикаторы (по одной на абзац) ---------- */
+.wish-dots {
+  margin-top: 28px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  max-width: 320px;
+}
+.wish-dots span {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ink-soft);
+  opacity: 0.3;
+  transition: opacity 0.4s ease, transform 0.4s ease, background 0.4s ease;
+}
+.wish-dots span.seen { opacity: 0.6; background: var(--gold); }
+.wish-dots span.on   { opacity: 1; background: var(--gold); transform: scale(1.5); }
+
+@media (max-width: 480px) {
+  .wish-text { min-height: 15em; }
+  #wish-next { margin-top: 32px; }
+}

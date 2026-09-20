@@ -1,0 +1,18 @@
+{
+  "name": "С днём рождения",
+  "short_name": "С днём рождения",
+  "description": "Небольшая открытка. Включи звук и не торопись",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "background_color": "#180f1e",
+  "theme_color": "#241a2b",
+  "lang": "ru",
+  "dir": "ltr",
+  "icons": [
+    { "src": "assets/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "assets/icons/icon-512-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
