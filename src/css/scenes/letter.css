@@ -326,6 +326,60 @@
   to   { opacity: 0.85; transform: translateX(-50%); }
 }
 
+/* ---------- письмо картинкой (телефон) ----------
+   Окно поверх всего: сверху кнопки «сохранить» и «закрыть», под ними подсказка и сама
+   картинка. Создаёт letterimage.js. */
+.li-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  background: rgba(12, 7, 16, 0.94);
+  padding: max(14px, env(safe-area-inset-top)) 14px max(24px, env(safe-area-inset-bottom));
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.li-bar {
+  position: sticky;
+  top: 0;
+  z-index: 1;
+  display: flex;
+  gap: 10px;
+  padding: 4px 0 10px;
+}
+.li-btn {
+  height: 42px;
+  padding: 0 20px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-soft);
+  background: var(--card);
+  color: var(--ink);
+  font-family: var(--font-pixel);
+  font-size: 18px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 16px var(--shadow);
+}
+.li-btn:disabled { opacity: 0.45; }
+.li-note {
+  margin: 4px 0 12px;
+  max-width: 460px;
+  text-align: center;
+  font-family: var(--font-pixel);
+  font-size: 17px;
+  color: var(--ink-soft);
+}
+.li-img {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border-radius: 6px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.55);
+  -webkit-touch-callout: default;      /* iOS: долгое нажатие на картинку → «Сохранить» */
+  user-select: none;
+}
+
 /* ---------- печать / сохранение в PDF ----------
    letter.js собирает на странице скрытый блок #print-letter с ПОЛНЫМ текстом письма
    (включая «Дополнение», даже если оно свёрнуто на экране):

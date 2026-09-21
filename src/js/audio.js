@@ -15,12 +15,12 @@
     Sound.chime()            — звон, когда погасли свечи
     Sound.toggle()           — включить/выключить всё
     Sound.bindButton(btn)    — привязать кнопку «звук: вкл/выкл»
-    Sound.bindMusicSlider(range, valueEl) — ползунок громкости ФОНОВОЙ музыки (0–100%, старт 70%)
+    Sound.bindMusicSlider(range, valueEl) — ползунок громкости ФОНОВОЙ музыки (0–100%, старт 50%)
     Sound.setMusicVolume(0..1)            — то же из кода; эффекты и печать не затрагивает
 */
 (function () {
   const TRACK_SRC = 'assets/audio/background.mp3';   // null → только синтез
-  const DEFAULT_MUSIC_LEVEL = 0.7; // громкость фоновой музыки при старте (0..1); регулируется ползунком
+  const DEFAULT_MUSIC_LEVEL = 0.5; // громкость фоновой музыки при старте (0..1); регулируется ползунком
   const FADE_MS = 2500;            // плавное нарастание фона
 
   let ctx = null;

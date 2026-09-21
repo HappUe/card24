@@ -53,8 +53,12 @@
   exportBtn.id = 'export-btn';
   exportBtn.className = 'export-btn';
   exportBtn.hidden = true;
-  exportBtn.textContent = (window.CONTENT && window.CONTENT.ui && window.CONTENT.ui.exportPdf) || 'сохранить PDF';
-  exportBtn.setAttribute('aria-label', 'Сохранить письмо в PDF');
+  // На телефонах окно печати часто не открывается — там кнопка сохраняет письмо КАРТИНКОЙ
+  // (letterimage.js, тот же вид, что у PDF). На компьютере остаётся PDF.
+  const touchOnly = window.matchMedia('(hover: none) and (pointer: coarse)').matches && !!window.LetterImage;
+  const uiText = (window.CONTENT && window.CONTENT.ui) || {};
+  exportBtn.textContent = touchOnly ? (uiText.exportImage || 'сохранить картинкой') : (uiText.exportPdf || 'сохранить PDF');
+  exportBtn.setAttribute('aria-label', touchOnly ? 'Сохранить письмо картинкой' : 'Сохранить письмо в PDF');
   document.body.appendChild(exportBtn);
 
   /* ---------- «пройти заново» ----------
@@ -125,7 +129,7 @@
     if (savedTitle !== null) { document.title = savedTitle; savedTitle = null; }
   });
 
-  exportBtn.addEventListener('click', savePdf);
+  exportBtn.addEventListener('click', touchOnly ? () => window.LetterImage.open() : savePdf);
 
   let state = 'closed';        // closed → opening → typing → done
   let token = 0;               // растёт при каждом сбросе — старые таймеры сами замолкают

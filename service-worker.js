@@ -13,7 +13,7 @@
   интернет, человек всегда видит свежую версию; без интернета — последнюю
   сохранённую.
 */
-const CACHE_VERSION = 3;
+const CACHE_VERSION = 4;
 const CACHE_NAME = 'birthday-card-v' + CACHE_VERSION;
 
 // всё, без чего открытка не соберётся — сохраняем сразу при установке
@@ -44,6 +44,7 @@ const PRECACHE_FILES = [
   './src/js/wishes.js',
   './src/js/cake.js',
   './src/js/confetti.js',
+  './src/js/letterimage.js',
   './src/js/letter.js',
   './src/js/clouds.js',
   './src/js/main.js',
