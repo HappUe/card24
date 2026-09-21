@@ -15,10 +15,12 @@
     Sound.chime()            — звон, когда погасли свечи
     Sound.toggle()           — включить/выключить всё
     Sound.bindButton(btn)    — привязать кнопку «звук: вкл/выкл»
+    Sound.bindMusicSlider(range, valueEl) — ползунок громкости ФОНОВОЙ музыки (0–100%, старт 70%)
+    Sound.setMusicVolume(0..1)            — то же из кода; эффекты и печать не затрагивает
 */
 (function () {
   const TRACK_SRC = 'assets/audio/background.mp3';   // null → только синтез
-  const MUSIC_VOLUME = 0.6;        // громкость mp3 (0..1)
+  const DEFAULT_MUSIC_LEVEL = 0.7; // громкость фоновой музыки при старте (0..1); регулируется ползунком
   const FADE_MS = 2500;            // плавное нарастание фона
 
   let ctx = null;
@@ -26,6 +28,10 @@
   let musicGain = null;            // громкость фона (синтез)
   let ambient = [];                // осцилляторы синтезированного фона
   let trackEl = null;              // <audio> для настоящего трека
+  let trackGain = null;            // регулятор громкости трека (через Web Audio; нужен на iPhone)
+  let trackFade = 0;               // 0..1 — плавное нарастание при старте
+  let musicLevel = DEFAULT_MUSIC_LEVEL;   // ползунок музыки (только фон, не эффекты и не печать)
+  let musicRange = null, musicValue = null;
   let soundOn = true;
   let musicStarted = false;
   let button = null;
@@ -116,26 +122,67 @@
     });
     musicGain.gain.cancelScheduledValues(ctx.currentTime);
     musicGain.gain.setValueAtTime(0, ctx.currentTime);
-    musicGain.gain.linearRampToValueAtTime(1, ctx.currentTime + FADE_MS / 1000);
+    musicGain.gain.linearRampToValueAtTime(musicLevel / DEFAULT_MUSIC_LEVEL, ctx.currentTime + FADE_MS / 1000);
+  }
+
+  // громкость трека = ползунок × плавное нарастание
+  function applyTrackLevel() {
+    const v = musicLevel * trackFade;
+    if (trackGain) trackGain.gain.value = v;
+    else if (trackEl) trackEl.volume = v;
   }
 
   function startTrack() {
     trackEl = new Audio(TRACK_SRC);
     trackEl.loop = true;
-    trackEl.volume = 0;
     trackEl.muted = !soundOn;
-    trackEl.addEventListener('error', () => { trackEl = null; startSynthAmbient(); });
+
+    // На iPhone громкость <audio> не меняется программно — там ползунок работает только
+    // через Web Audio. Это возможно на http(s); при открытии файла двойным кликом
+    // (file://) браузер заглушил бы трек, поэтому там громкость задаётся самим <audio>.
+    trackGain = null;
+    if (ctx && /^https?:$/.test(window.location.protocol)) {
+      try {
+        trackGain = ctx.createGain();
+        trackGain.gain.value = 0;
+        ctx.createMediaElementSource(trackEl).connect(trackGain).connect(master);
+        trackEl.muted = false;                       // гасит и включает общий master
+      } catch (e) { trackGain = null; }
+    }
+    trackFade = 0;
+    applyTrackLevel();
+
+    trackEl.addEventListener('error', () => { trackEl = null; trackGain = null; startSynthAmbient(); });
     const p = trackEl.play();
-    if (p && p.catch) p.catch(() => { trackEl = null; startSynthAmbient(); });
+    if (p && p.catch) p.catch(() => { trackEl = null; trackGain = null; startSynthAmbient(); });
 
     // плавное нарастание громкости
     const t0 = performance.now();
     (function step(now) {
       if (!trackEl) return;
-      const k = Math.min(1, (now - t0) / FADE_MS);
-      trackEl.volume = MUSIC_VOLUME * k;
-      if (k < 1) requestAnimationFrame(step);
+      trackFade = Math.min(1, (now - t0) / FADE_MS);
+      applyTrackLevel();
+      if (trackFade < 1) requestAnimationFrame(step);
     })(t0);
+  }
+
+  /* ---------- громкость музыки (только фон) ---------- */
+  function setMusicVolume(v) {
+    musicLevel = Math.max(0, Math.min(1, v));
+    if (trackEl) applyTrackLevel();
+    if (ctx && musicGain && ambient.length) {        // запасной синтез: 70% = прежняя громкость
+      musicGain.gain.cancelScheduledValues(ctx.currentTime);
+      musicGain.gain.setTargetAtTime(musicLevel / DEFAULT_MUSIC_LEVEL, ctx.currentTime, 0.05);
+    }
+    if (musicRange) musicRange.value = Math.round(musicLevel * 100);
+    if (musicValue) musicValue.textContent = Math.round(musicLevel * 100) + '%';
+  }
+
+  function bindMusicSlider(range, valueEl) {
+    musicRange = range;
+    musicValue = valueEl || null;
+    setMusicVolume(musicLevel);
+    range.addEventListener('input', () => setMusicVolume(range.value / 100));
   }
 
   function startMusic() {
@@ -210,5 +257,9 @@
     btn.addEventListener('click', toggle);
   }
 
-  window.Sound = { unlock, startMusic, blip, glitch, chime, toggle, bindButton, isOn: () => soundOn };
+  window.Sound = {
+    unlock, startMusic, blip, glitch, chime, toggle, bindButton,
+    setMusicVolume, bindMusicSlider, musicVolume: () => musicLevel,
+    isOn: () => soundOn
+  };
 })();

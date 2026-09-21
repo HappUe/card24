@@ -55,6 +55,13 @@
 <!-- кнопка звука (появляется после старта) -->
 <button id="sound-toggle" type="button" hidden>звук: вкл</button>
 
+<!-- громкость ФОНОВОЙ музыки (не эффектов и не печати); под кнопкой звука, видна на всех сценах после старта -->
+<div id="music-vol" class="music-vol" hidden>
+  <span class="music-vol-label pixel" data-content="ui.music" aria-hidden="true">музыка</span>
+  <input id="music-vol-range" type="range" min="0" max="100" step="1" value="70" aria-label="Громкость фоновой музыки">
+  <span id="music-vol-val" class="music-vol-val pixel" aria-hidden="true">70%</span>
+</div>
+
 <!-- слой конфетти поверх всего -->
 <div id="confetti-layer" aria-hidden="true"></div>
 

@@ -20,17 +20,20 @@
   // в браузере нет — к письму можно дойти только через пожелания и торт.
   const soundBtn = document.getElementById('sound-toggle');
   const startBtn = document.getElementById('start-btn');
+  const musicVol = document.getElementById('music-vol');
 
   function beginExperience() {
     // Звук можно включать только из клика/тапа — поэтому здесь
     Sound.unlock();
     Sound.startMusic();
     soundBtn.hidden = false;
+    musicVol.hidden = false;
   }
 
   function init() {
     fillTexts();
     Sound.bindButton(soundBtn);
+    Sound.bindMusicSlider(document.getElementById('music-vol-range'), document.getElementById('music-vol-val'));
 
     startBtn.addEventListener('click', () => {
       beginExperience();

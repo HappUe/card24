@@ -240,7 +240,7 @@
   // клавиатура: → или пробел (Enter на кнопке и так нажимает её сам)
   document.addEventListener('keydown', e => {
     if (Scenes.current() !== 'wishes') return;
-    if (e.target.closest && e.target.closest('button')) return;
+    if (e.target.closest && e.target.closest('button, input')) return;   // ползунок музыки сам ловит стрелки
     if (e.key === 'ArrowRight' || e.key === ' ') { e.preventDefault(); skipOrAdvance(); }
   });
 

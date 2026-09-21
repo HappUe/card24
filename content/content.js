@@ -196,6 +196,7 @@ window.CONTENT = {
     soundOn: 'звук: вкл',
     soundOff: 'звук: выкл',
     restart: 'пройти заново',
+    music: 'музыка',
     skipHint: 'нажми — показать всё сразу'
   }
 };

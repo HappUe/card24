@@ -88,6 +88,43 @@
 #sound-toggle:hover { opacity: 1; }
 #sound-toggle[hidden] { display: none; }
 
+/* громкость фоновой музыки: под кнопкой звука, в том же стиле */
+.music-vol {
+  position: fixed;
+  top: calc(max(14px, env(safe-area-inset-top)) + 50px);
+  right: max(14px, env(safe-area-inset-right));
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 38px;
+  padding: 0 14px;
+  border-radius: 999px;
+  border: 1px solid var(--ink-soft);
+  background: var(--card);
+  color: var(--ink-soft);
+  font-family: var(--font-pixel);
+  font-size: 17px;
+  letter-spacing: 0.04em;
+  box-shadow: 0 6px 16px var(--shadow);
+  opacity: 0.85;
+}
+.music-vol:hover, .music-vol:focus-within { opacity: 1; }
+.music-vol[hidden] { display: none; }
+.music-vol input[type="range"] {
+  width: 110px;
+  height: 24px;
+  margin: 0;
+  accent-color: var(--gold);
+  cursor: pointer;
+  touch-action: pan-y;             /* горизонтальное движение — ползунок, а не прокрутка */
+}
+.music-vol-val { min-width: 3ch; text-align: right; }
+@media (max-width: 480px) {
+  .music-vol-label { display: none; }
+  .music-vol input[type="range"] { width: 96px; }
+}
+
 /* подсказка внизу экрана («нажми — показать всё сразу» и т.п.) */
 .hint-bar {
   position: fixed;
